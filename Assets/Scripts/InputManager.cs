@@ -13,6 +13,7 @@ public class InputManager : MonoBehaviour
     private Vector3 _moveDirection;
 
     private Vector2 _mouseDelta;
+    private Ray _mouseRay;
 
     [SerializeField] private float _speed = 5.0f;
     [SerializeField] private float _mouseSensitivity = 5.0f;
@@ -26,6 +27,20 @@ public class InputManager : MonoBehaviour
     private void Update()
     {
         transform.Translate(_moveDirection.normalized * _speed * Time.deltaTime);
+    }
+
+    private void FixedUpdate()
+    {
+        if(Physics.Raycast(_mouseRay, out RaycastHit hit, Mathf.Infinity))
+        {
+            Vector3 lookDir = hit.point;
+            lookDir.y = _player.GFX.transform.position.y;
+            _player.GFX.transform.LookAt(lookDir);
+
+            Vector3 rotation = _player.GFX.transform.localEulerAngles;
+            rotation.y -= 90.0f;
+            _player.GFX.transform.localEulerAngles = rotation;
+        }
     }
 
     private void OnEnable()
@@ -59,9 +74,6 @@ public class InputManager : MonoBehaviour
     private void OnLook(InputAction.CallbackContext context)
     {
         _mouseDelta = context.ReadValue<Vector2>();
-
-        Vector3 rotation = _player.GFX.transform.localEulerAngles;
-        rotation.y -= _mouseDelta.y + Camera.main.transform.localEulerAngles.y;
-        _player.GFX.transform.localEulerAngles = rotation;
+        _mouseRay = Camera.main.ScreenPointToRay(_mouseDelta);
     }
 }
