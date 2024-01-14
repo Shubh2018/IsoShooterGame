@@ -5,6 +5,12 @@ using UnityEngine.InputSystem;
 
 public class Player : MonoBehaviour
 {
+    [SerializeField] private Transform _cameraFollow;
+    public Transform CameraFollow { get { return _cameraFollow; } }
+
+    private Transform _aimCamera;
+    public Transform AimCamera { get { return _aimCamera; } }
+
     [SerializeField] private Transform _gfx;
     public Transform GFX { get { return _gfx; } }
 }
