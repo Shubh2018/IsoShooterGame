@@ -17,6 +17,7 @@ public class PlayerInputManager : MonoBehaviour
 
     private float _isFiring;
     private float _isAiming;
+    private float _jumpPressed;
 
     private bool _canRotateMouse = false;
 
@@ -28,6 +29,8 @@ public class PlayerInputManager : MonoBehaviour
     [SerializeField] private float _speed = 5.0f;
     [SerializeField] private float _mouseSensitivity = 5.0f;
     [SerializeField] private float _maxRotationSpeed = 0.1f;
+
+    [SerializeField] private float _jumpDistance = 5.0f;
 
     [Header("WeaponProperties")]
     [SerializeField] private Transform _weaponSocket;
@@ -62,7 +65,7 @@ public class PlayerInputManager : MonoBehaviour
 
     private void FixedUpdate()
     {
-/*        if (_isFiring != 0)
+        if (_isFiring != 0)
         {
             Ray ray = _mainCamera.ScreenPointToRay(_crosshair.transform.position);
 
@@ -70,7 +73,7 @@ public class PlayerInputManager : MonoBehaviour
                 FireWeapon(hit.point);
             else
                 FireWeapon(_equippedWeapon.SpawnPoint.position + (ray.direction * _equippedWeapon.WeaponData._range));
-        }*/
+        }
     }
 
     private void LateUpdate()
@@ -107,7 +110,7 @@ public class PlayerInputManager : MonoBehaviour
             _thirdPersonVirtualCamera.gameObject.SetActive(true);
         }
 
-        if (dir.magnitude > 0.01f)
+        if (dir.magnitude > 0.01f || (_isAiming != 0 && Vector3.Magnitude(_mouseDelta) != 0))
         {
             float angle = RotateTransform(dir);
             float smoothAngle = Mathf.SmoothDampAngle(_player.GFX.transform.localEulerAngles.y, angle, ref _currentRotationVelocity, _maxRotationSpeed);
@@ -180,6 +183,16 @@ public class PlayerInputManager : MonoBehaviour
         _isAiming = 0.0f;
     }
 
+    private void OnJumpPressed(InputAction.CallbackContext context)
+    {
+        _jumpPressed = context.ReadValue<float>();
+    }
+
+    private void OnJumpReleased(InputAction.CallbackContext context)
+    {
+        _jumpPressed = 0.0f;
+    }
+
     private void OnPause(InputAction.CallbackContext context)
     {
         if(context.ReadValue<float>() != 0)
@@ -207,8 +220,12 @@ public class PlayerInputManager : MonoBehaviour
         _playerInputActions.Player.Fire.canceled += OnFireLeft;
 
         _playerInputActions.Player.Pause.performed += OnPause;
+
         _playerInputActions.Player.Aim.performed += OnAimHeld;
         _playerInputActions.Player.Aim.canceled += OnAimLeft;
+
+        _playerInputActions.Player.Jump.started += OnJumpPressed;
+        _playerInputActions.Player.Jump.canceled += OnJumpReleased;
 
         _canRotateMouse = true;
     }
@@ -225,8 +242,12 @@ public class PlayerInputManager : MonoBehaviour
         _playerInputActions.Player.Fire.canceled -= OnFireLeft;
 
         _playerInputActions.Player.Pause.performed -= OnPause;
+
         _playerInputActions.Player.Aim.performed -= OnAimHeld;
         _playerInputActions.Player.Aim.canceled -= OnAimLeft;
+
+        _playerInputActions.Player.Jump.started -= OnJumpPressed;
+        _playerInputActions.Player.Jump.canceled -= OnJumpReleased;
 
         _canRotateMouse = false;
 
