@@ -6,7 +6,6 @@ using UnityEngine.UI;
 
 public class PlayerInputManager : MonoBehaviour
 {
-    private Player _player;
 
     private PlayerInputActions _playerInputActions;
 
@@ -19,20 +18,30 @@ public class PlayerInputManager : MonoBehaviour
     private float _isAiming;
     private float _jumpPressed;
 
+    private bool _isGrounded = true;
+
     private bool _canRotateMouse = false;
 
     private Weapon _equippedWeapon;
 
-    [Header("PlayerMovementProperties")]
+    [Header("Player Script")]
+    [SerializeField] private Player _player;
+
+    [Header("Player Movement Properties")]
     private float _currentRotationVelocity;
 
     [SerializeField] private float _speed = 5.0f;
     [SerializeField] private float _mouseSensitivity = 5.0f;
     [SerializeField] private float _maxRotationSpeed = 0.1f;
 
-    [SerializeField] private float _jumpDistance = 5.0f;
+    [SerializeField] private float _jumpTime = 1.0f;
+    [SerializeField] private float _jumpSpeed = 5.0f;
+    [SerializeField] private float _groundCheckDistance = 1.0f;
 
-    [Header("WeaponProperties")]
+    [SerializeField] private Vector3 _halfExtents;
+    [SerializeField] private LayerMask _jumpLayer;
+
+    [Header("Weapon Properties")]
     [SerializeField] private Transform _weaponSocket;
     [SerializeField] private Image _crosshair;
 
@@ -51,7 +60,6 @@ public class PlayerInputManager : MonoBehaviour
     private void Start()
     {
         _mainCamera = Camera.main;
-        _player = GetComponent<Player>();
         _equippedWeapon = _weaponSocket.GetComponentInChildren<Weapon>();
 
         _aimVirtualCamera.gameObject.SetActive(false);
@@ -72,8 +80,11 @@ public class PlayerInputManager : MonoBehaviour
             if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity))
                 FireWeapon(hit.point);
             else
-                FireWeapon(_equippedWeapon.SpawnPoint.position + (ray.direction * _equippedWeapon.WeaponData._range));
+                FireWeapon(ray.direction * _equippedWeapon.WeaponData._range);
         }
+
+        _isGrounded = Physics.OverlapBox(_player.GroundCheck.position, _halfExtents, Quaternion.identity, _jumpLayer) != null ? true : false;
+        Debug.Log(_isGrounded);
     }
 
     private void LateUpdate()
@@ -98,25 +109,24 @@ public class PlayerInputManager : MonoBehaviour
         Vector3 localCameraDir = TransformGlobalToLocal(dir);
         localCameraDir.y = 0.0f;
 
-        if (_isAiming != 0)
+        if(_isAiming == 0f)
         {
-            _aimVirtualCamera.gameObject.SetActive(true);
-            _thirdPersonVirtualCamera.gameObject.SetActive(false);
+            ToggleAim(false);
+
+            if (dir.magnitude > 0.01f || _isFiring != 0)
+            {
+                float angle = RotateTransform(dir);
+                float smoothAngle = Mathf.SmoothDampAngle(_player.GFX.transform.localEulerAngles.y, angle, ref _currentRotationVelocity, _maxRotationSpeed);
+                _player.GFX.transform.localEulerAngles = new Vector3(0.0f, smoothAngle, 0.0f);
+            }
         }
 
         else
         {
-            _aimVirtualCamera.gameObject.SetActive(false);
-            _thirdPersonVirtualCamera.gameObject.SetActive(true);
+            ToggleAim(true);
+            _player.GFX.transform.localEulerAngles = _player.CameraFollow.transform.localEulerAngles;
         }
-
-        if (dir.magnitude > 0.01f || (_isAiming != 0 && Vector3.Magnitude(_mouseDelta) != 0))
-        {
-            float angle = RotateTransform(dir);
-            float smoothAngle = Mathf.SmoothDampAngle(_player.GFX.transform.localEulerAngles.y, angle, ref _currentRotationVelocity, _maxRotationSpeed);
-            _player.GFX.transform.localEulerAngles = new Vector3(0.0f, smoothAngle, 0.0f);
-        }
-        
+                
         transform.Translate(localCameraDir * _speed * Time.deltaTime);
     }
 
@@ -132,6 +142,12 @@ public class PlayerInputManager : MonoBehaviour
     {
         float angle = Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg + _mainCamera.transform.eulerAngles.y;
         return angle;
+    }
+
+    private void ToggleAim(bool aim)
+    {
+        _aimVirtualCamera.gameObject.SetActive(aim);
+        _thirdPersonVirtualCamera.gameObject.SetActive(!aim);
     }
 
     private void MouseLook(Vector3 delta)
@@ -256,4 +272,10 @@ public class PlayerInputManager : MonoBehaviour
         _playerInputActions = null;
     }
     #endregion
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireCube(_player.GroundCheck.position, _halfExtents * 2);
+    }
 }

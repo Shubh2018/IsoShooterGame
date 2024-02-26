@@ -13,4 +13,8 @@ public class Player : MonoBehaviour
 
     [SerializeField] private Transform _gfx;
     public Transform GFX { get { return _gfx; } }
+
+    [SerializeField] private Transform _groundCheck;
+    public Transform GroundCheck { get { return _groundCheck; } }
+
 }
