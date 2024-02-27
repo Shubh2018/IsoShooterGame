@@ -1,7 +1,10 @@
 using Cinemachine;
 using System;
+using UnityEditor;
+using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Rendering;
 using UnityEngine.UI;
 
 public class PlayerInputManager : MonoBehaviour
@@ -17,6 +20,14 @@ public class PlayerInputManager : MonoBehaviour
     private float _isFiring;
     private float _isAiming;
     private float _jumpPressed;
+
+    private bool _canJump = false;
+    private bool _hasReachedTop = false;
+
+
+    private Vector3 _initialPos;
+    private Vector3 _finalPos;
+    private float _distance;
 
     private bool _isGrounded = true;
 
@@ -39,7 +50,7 @@ public class PlayerInputManager : MonoBehaviour
     [SerializeField] private float _groundCheckDistance = 1.0f;
 
     [SerializeField] private Vector3 _halfExtents;
-    [SerializeField] private LayerMask _jumpLayer;
+    [SerializeField] private LayerMask _groundLayer;
 
     [Header("Weapon Properties")]
     [SerializeField] private Transform _weaponSocket;
@@ -83,8 +94,7 @@ public class PlayerInputManager : MonoBehaviour
                 FireWeapon(ray.direction * _equippedWeapon.WeaponData._range);
         }
 
-        _isGrounded = Physics.OverlapBox(_player.GroundCheck.position, _halfExtents, Quaternion.identity, _jumpLayer) != null ? true : false;
-        Debug.Log(_isGrounded);
+        Jump();
     }
 
     private void LateUpdate()
@@ -168,6 +178,43 @@ public class PlayerInputManager : MonoBehaviour
         _player.CameraFollow.transform.localEulerAngles = camRotation;
     }
 
+    private void Jump()
+    {
+        _isGrounded = IsPlayerGrounded();
+        Debug.Log($"{_isGrounded}");
+
+        if (_jumpPressed == 0.0f) return;
+
+        if(!_isGrounded && _hasReachedTop)
+        {
+            Vector3 currentPos = transform.position;
+            currentPos.y += Physics.gravity.y * Time.fixedDeltaTime;
+            transform.position = currentPos;
+        }
+
+        else
+        {
+            Vector3 currentPos = transform.position;
+            currentPos.y += _jumpSpeed * Time.deltaTime;
+            transform.position = currentPos;
+
+            if(transform.position.y >= _finalPos.y)
+            {
+                _hasReachedTop = true;
+            }
+        }
+    }
+
+    private bool IsPlayerGrounded()
+    {
+        Collider[] coll = Physics.OverlapBox(_player.GroundCheck.position, _halfExtents, Quaternion.identity, _groundLayer);
+
+        if (coll.Length > 0)
+            return true;
+
+        return false;
+    }
+
     #region InputCallbacks
     private void OnMove(InputAction.CallbackContext context)
     {
@@ -202,11 +249,18 @@ public class PlayerInputManager : MonoBehaviour
     private void OnJumpPressed(InputAction.CallbackContext context)
     {
         _jumpPressed = context.ReadValue<float>();
+
+        _initialPos = transform.position;
+        _distance = -(Physics.gravity.y * _jumpTime * _jumpTime) / 2;
+
+        _finalPos = _initialPos + new Vector3(0.0f, _distance, 0.0f);
+
+        _hasReachedTop = false;
     }
 
     private void OnJumpReleased(InputAction.CallbackContext context)
     {
-        _jumpPressed = 0.0f;
+        //_jumpPressed = context.ReadValue<float>();
     }
 
     private void OnPause(InputAction.CallbackContext context)
