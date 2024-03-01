@@ -826,7 +826,6 @@ Transform:
   m_Children:
   - {fileID: 1098271264}
   - {fileID: 1434251135}
-  - {fileID: 1638561358}
   m_Father: {fileID: 1039126106}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!23 &592840036
@@ -1329,7 +1328,7 @@ GameObject:
   - component: {fileID: 868227158}
   - component: {fileID: 868227157}
   - component: {fileID: 868227156}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Plane
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1529,6 +1528,7 @@ Transform:
   m_Children:
   - {fileID: 592840034}
   - {fileID: 1649167306}
+  - {fileID: 1638561358}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1039126108
@@ -1560,10 +1560,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _player: {fileID: 1039126108}
   _speed: 10
-  _gravity: 2
+  _gravity: 20
   _mouseSensitivity: 15
   _maxRotationSpeed: 0.1
-  _jumpTime: 1
+  _jumpHeight: 3
   _jumpSpeed: 10
   _groundCheckDistance: 0
   _halfExtents: {x: 0.5, y: 0.1, z: 0.5}
@@ -1915,7 +1915,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1434251135
 Transform:
   m_ObjectHideFlags: 0
@@ -2098,11 +2098,11 @@ Transform:
   m_GameObject: {fileID: 1638561357}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: -1, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 592840034}
+  m_Father: {fileID: 1039126106}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1649167305
 GameObject:

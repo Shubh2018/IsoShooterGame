@@ -13,6 +13,7 @@ public class PlayerInputManager : MonoBehaviour
 
     private Camera _mainCamera;
     private Vector3 _moveDirection;
+    private Vector3 _verticalVelocity;
 
     private Vector2 _mouseDelta;
 
@@ -37,7 +38,7 @@ public class PlayerInputManager : MonoBehaviour
     [SerializeField] private float _mouseSensitivity = 5.0f;
     [SerializeField] private float _maxRotationSpeed = 0.1f;
 
-    [SerializeField] private float _jumpTime = 1.0f;
+    [SerializeField] private float _jumpHeight = 1.0f;
     [SerializeField] private float _jumpSpeed = 5.0f;
     [SerializeField] private float _groundCheckDistance = 1.0f;
 
@@ -78,7 +79,7 @@ public class PlayerInputManager : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (_isFiring != 0)
+/*        if (_isFiring != 0)
         {
             Ray ray = _mainCamera.ScreenPointToRay(_crosshair.transform.position);
 
@@ -86,7 +87,7 @@ public class PlayerInputManager : MonoBehaviour
                 FireWeapon(hit.point);
             else
                 FireWeapon(ray.direction * _equippedWeapon.WeaponData._range);
-        }
+        }*/
     }
 
     private void LateUpdate()
@@ -101,15 +102,20 @@ public class PlayerInputManager : MonoBehaviour
 
     private void OnDisable()
     {
-        DeinitializePlayerInput();
+        UninitializePlayerInput();
     }
 
     private void MovePlayer(Vector3 moveDirection)
     {
         Vector3 dir = new Vector3(moveDirection.x, 0.0f, moveDirection.y);
 
-        Vector3 localCameraDir = TransformGlobalToLocal(dir);
+        Vector3 localCameraDir = TransformGlobalToLocal(dir) * _speed * Time.deltaTime;
         localCameraDir.y = 0.0f;
+
+        if(IsPlayerGrounded())
+        {
+            _verticalVelocity.y = 0.0f;
+        }
 
         if(_isAiming == 0f)
         {
@@ -128,23 +134,17 @@ public class PlayerInputManager : MonoBehaviour
             ToggleAim(true);
             _player.GFX.transform.localEulerAngles = _player.CameraFollow.transform.localEulerAngles;
         }
-
-        Debug.Log(IsPlayerGrounded());
-
-        if(!IsPlayerGrounded() && _jumpPressed == 0.0f)
-        {
-            localCameraDir.y -= _gravity;
-        }
-
-        else
-        {
-            if(_jumpPressed != 0.0f)
-            {
-                localCameraDir.y += _gravity;
-            }
-        }
                 
-        _characterController.Move(localCameraDir * _speed * Time.deltaTime);
+        _characterController.Move(localCameraDir);
+
+        if(IsPlayerGrounded() && _jumpPressed != 0)
+        {
+            _verticalVelocity.y += Mathf.Sqrt(2 * _gravity * _jumpHeight);
+        }
+
+        _verticalVelocity.y -= _gravity * Time.deltaTime;
+
+        _characterController.Move(_verticalVelocity * Time.deltaTime);
     }
 
     private Vector3 TransformGlobalToLocal(Vector3 worldDir)
@@ -183,13 +183,6 @@ public class PlayerInputManager : MonoBehaviour
             camRotation.x = 60.0f;
 
         _player.CameraFollow.transform.localEulerAngles = camRotation;
-    }
-
-    private IEnumerator ResetJump()
-    {
-        yield return new WaitForSeconds(1.0f);
-
-        _jumpPressed = 0.0f;
     }
 
     private bool IsPlayerGrounded()
@@ -238,12 +231,11 @@ public class PlayerInputManager : MonoBehaviour
     private void OnJumpPressed(InputAction.CallbackContext context)
     {
         _jumpPressed = context.ReadValue<float>();
-        StartCoroutine(ResetJump());
     }
 
     private void OnJumpReleased(InputAction.CallbackContext context)
     {
-        //_jumpPressed = context.ReadValue<float>();
+        _jumpPressed = context.ReadValue<float>();
     }
 
     private void OnPause(InputAction.CallbackContext context)
@@ -283,7 +275,7 @@ public class PlayerInputManager : MonoBehaviour
         _canRotateMouse = true;
     }
 
-    private void DeinitializePlayerInput()
+    private void UninitializePlayerInput()
     {
         _playerInputActions.Player.Move.performed -= OnMove;
         _playerInputActions.Player.Move.canceled -= OnMove;
