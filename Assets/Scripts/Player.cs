@@ -17,4 +17,10 @@ public class Player : MonoBehaviour
     [SerializeField] private Transform _groundCheck;
     public Transform GroundCheck { get { return _groundCheck; } }
 
+    [SerializeField] private Animator _characterAnimator;
+
+    public void SwitchMovementState(int blendstate)
+    {
+        _characterAnimator.SetFloat(GlobalVariables.WalkThreshold, blendstate);
+    }
 }

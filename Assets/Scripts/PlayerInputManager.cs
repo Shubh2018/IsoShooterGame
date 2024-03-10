@@ -21,6 +21,9 @@ public class PlayerInputManager : MonoBehaviour
     private float _isAiming;
     private float _jumpPressed;
 
+    private float _moveSpeedDelay = 0.5f;
+    private float _currentSpeed = 0.0f;
+
     private bool _canJump = false;
 
     private bool _canRotateMouse = false;
@@ -121,20 +124,27 @@ public class PlayerInputManager : MonoBehaviour
         {
             ToggleAim(false);
 
-            if (dir.magnitude > 0.01f || _isFiring != 0)
+            if (dir.magnitude > 0.01f)
             {
                 float angle = RotateTransform(dir);
                 float smoothAngle = Mathf.SmoothDampAngle(_player.GFX.transform.localEulerAngles.y, angle, ref _currentRotationVelocity, _maxRotationSpeed);
                 _player.GFX.transform.localEulerAngles = new Vector3(0.0f, smoothAngle, 0.0f);
+
+                _player.SwitchMovementState(1);
+            }
+
+            else
+            {
+                _player.SwitchMovementState(0);
             }
         }
 
-        else
+/*        else
         {
             ToggleAim(true);
             _player.GFX.transform.localEulerAngles = _player.CameraFollow.transform.localEulerAngles;
-        }
-                
+        }*/
+
         _characterController.Move(localCameraDir);
 
         if(IsPlayerGrounded() && _jumpPressed != 0)
@@ -163,8 +173,8 @@ public class PlayerInputManager : MonoBehaviour
 
     private void ToggleAim(bool aim)
     {
-        _aimVirtualCamera.gameObject.SetActive(aim);
-        _thirdPersonVirtualCamera.gameObject.SetActive(!aim);
+/*        _aimVirtualCamera.gameObject.SetActive(aim);
+        _thirdPersonVirtualCamera.gameObject.SetActive(!aim);*/
     }
 
     private void MouseLook(Vector3 delta)
